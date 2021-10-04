@@ -1,0 +1,81 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  #+quicklisp(ql:quickload '(lquery cl-json cl-ppcre) :silent t)
+  )
+
+(defpackage :ros.script.grab-runeword.3841622002
+  (:use :cl))
+(in-package :ros.script.grab-runeword.3841622002)
+
+(defvar *runes* '())
+(defvar *runewords* '())
+
+(defun parse-runeword-page (path version &optional (num 1))
+  (let* ((data (lquery:$ (initialize path)))
+         (tables (lquery:$ data "center table")))
+    (loop for i to (- num 1)
+          do (let* ((table (elt tables i))
+                    (rows (lquery:$ table "tr")))
+               (loop for row across rows
+                     do (let ((vals (lquery:$ row "td" (text))))
+                          (when (> (length vals) 0)
+                            (let (word)
+                              (setf (getf word :name) (elt vals 0))
+                              (cl-ppcre:register-groups-bind (n type)
+                                                             ("^(\\d+) Socket ([\\w /\(\)]+)$" (elt vals 1))
+                                                             (progn
+                                                               (setf (getf word :socket) (or (parse-integer (or n "") :junk-allowed t) 0)
+                                                                     (getf word :type) (cl-ppcre:split "/" type))))
+                              (setf (getf word :runes) (cl-ppcre:split "\\s*\\+\\s*" (elt vals 2)))
+                              (setf (getf word :stats) (remove-if (lambda (val) (cl-ppcre:scan "^\\s*$" val))
+                                                                  (cl-ppcre:split "\\r\\n" (elt vals 3))))
+                              (setf (getf word :version) version)
+                              (push word *runewords*)))))))))
+
+(defun write-runewords-json ()
+  (with-open-file (out "./runewords.json" :direction :output)
+    (format out "[~%")
+    (loop for word in *runewords*
+          do (progn
+               (cl-json:encode-json-plist word out)
+               (format out ",~%")))
+    (format out "~%]")))
+
+(defun parse-runes-page (path)
+  (let* ((data (lquery:$ (initialize path)))
+         (rows (lquery:$ data "p > table tr"))
+         (id 1))
+    (loop for row across rows
+          do (let ((vals (lquery:$ row "td" (text))))
+               (when (> (length vals) 0)
+                 (let (word)
+                   (setf (getf word :id) id)
+                   (setf (getf word :name) (elt vals 1))
+                   (setf (getf word :weapon) (cl-ppcre:split "\\s*,\\s*" (elt vals 2)))
+                   (setf (getf word :armor_helm_shield) (elt vals 3))
+                   (push word *runes*))
+                 (setf id (1+ id)))))
+    (setf *runes* (reverse *runes*))))
+
+(defun write-runes-json ()
+  (with-open-file (out "./runes.json" :direction :output)
+    (format out "[~%")
+    (loop for word in *runes*
+          do (progn
+               (cl-json:encode-json-plist word out)
+               (format out ",~%")))
+    (format out "~%]")))
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (parse-runeword-page #P"./rw-original.shtml" "original")
+  (parse-runeword-page #P"./rw-110.shtml" "110" 2)
+  (parse-runeword-page #P"./rw-111.shtml" "111")
+  (write-runewords-json)
+  (parse-runes-page #P"./rws.shtml")
+  (write-runes-json))
