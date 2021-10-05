@@ -49,12 +49,43 @@ class App extends React.Component {
   }
 
   render() {
-    let rows = this.props.data.allRunewordsJson.nodes
-                   .filter(runeword => runeword.runes.some((rune) => rune === this.state.rune))
+    let rows = []
 
-    if (this.state.max_rune !== "") {
-      rows = rows.filter(row => row.runes.any(rune => rune.id < this.state.max_rune.id))
+    if (this.state.rune > 0) {
+      let cur_rune = this.props.data.allRunesJson.nodes.find(rune => rune.id === this.state.rune)
+
+      if (cur_rune) {
+        rows = this.props.data.allRunewordsJson.nodes.filter(runeword => runeword.runes.some(rune => rune === cur_rune.name))
+      }
+    } else {
+      rows = this.props.data.allRunewordsJson.nodes
     }
+
+    if (this.state.max_rune > 0) {
+      rows = rows.filter(row => row.runes.every(name => {
+        let data = this.props.data.allRunesJson.nodes.find(rune => rune.name === name)
+        return data && data.id <= this.state.max_rune
+      }))
+    }
+
+    rows.sort((a, b) => {
+      if (a.version < b.version) return -1
+      else if (a.version > b.version) return 1
+      else {
+        let a_name = a.name.toUpperCase()
+        let b_name = b.name.toUpperCase()
+
+        if (a_name < b_name) return -1
+        else if (a_name > b_name) return 1
+        else return 0
+      }
+    })
+
+    rows.forEach(row => {
+      if (row.type == null) {
+        row.type = []
+      }
+    })
 
     return (
       <main>
@@ -82,9 +113,9 @@ class App extends React.Component {
                       <TableRow key={row.name}>
                         <TableCell align="center">{row.name}</TableCell>
                         <TableCell align="center">{row.version}</TableCell>
-                        <TableCell align="center">{row.type}</TableCell>
-                        <TableCell align="center">{row.runes.join(' + ')}</TableCell>
-                        <TableCell align="center">{row.stats.map((stat) => (<p>{stat}</p>))}</TableCell>
+                        <TableCell align="center">{row.type.map(type => (<p>{type}</p>))}</TableCell>
+                        <TableCell align="center">{row.runes.map(rune => (<p>{rune}</p>))}</TableCell>
+                        <TableCell align="center">{row.stats.map(stat => (<p>{stat}</p>))}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -120,6 +151,11 @@ const IndexPage = () => {
       }
     }
   `)
+
+  data.allRunesJson.nodes.forEach(rune => {
+    let id = parseInt(rune.id)
+    rune.id = isNaN(id) ? -1 : id
+  })
 
   return (
     <App data={data}/>
