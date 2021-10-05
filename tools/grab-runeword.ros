@@ -37,14 +37,10 @@ exec ros -Q -- $0 "$@"
                               (setf (getf word :version) version)
                               (push word *runewords*)))))))))
 
-(defun write-runewords-json ()
-  (with-open-file (out "./runewords.json" :direction :output)
-    (format out "[~%")
-    (loop for word in *runewords*
-          do (progn
-               (cl-json:encode-json-plist word out)
-               (format out ",~%")))
-    (format out "~%]")))
+(defun write-list-json (list file)
+  (with-open-file (out file :direction :output :if-exists :supersede)
+    (format out "[~%~{  ~a~^,~%~}~%]"
+            (mapcar #'(lambda (word) (cl-json:encode-json-plist-to-string word)) list))))
 
 (defun parse-runes-page (path)
   (let* ((data (lquery:$ (initialize path)))
@@ -62,20 +58,11 @@ exec ros -Q -- $0 "$@"
                  (setf id (1+ id)))))
     (setf *runes* (reverse *runes*))))
 
-(defun write-runes-json ()
-  (with-open-file (out "./runes.json" :direction :output)
-    (format out "[~%")
-    (loop for word in *runes*
-          do (progn
-               (cl-json:encode-json-plist word out)
-               (format out ",~%")))
-    (format out "~%]")))
-
 (defun main (&rest argv)
   (declare (ignorable argv))
   (parse-runeword-page #P"./rw-original.shtml" "original")
   (parse-runeword-page #P"./rw-110.shtml" "110" 2)
   (parse-runeword-page #P"./rw-111.shtml" "111")
-  (write-runewords-json)
+  (write-list-json *runewords* "./runewords.json")
   (parse-runes-page #P"./rws.shtml")
-  (write-runes-json))
+  (write-list-json *runes* "./runes.json"))
