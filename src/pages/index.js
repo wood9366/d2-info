@@ -22,6 +22,13 @@ const RunewordSelect = ({label, runes, value, change}) => {
         value={value}
         label={label}
         onChange={change}
+        MenuProps={{
+          PaperProps: {
+            style: {
+              maxHeight: 300
+            }
+          }
+        }}
       >
         <MenuItem value={0}><em>None</em></MenuItem>
         {runes.map(rune => <MenuItem key={rune.id} value={rune.id}>{rune.name}</MenuItem>)}
@@ -90,8 +97,8 @@ class App extends React.Component {
     return (
       <main>
         <title>D2 Info</title>
-        <Grid container>
-          <Grid container item spacing={2}>
+        <Grid container spacing={2} columnSpacing={2}>
+          <Grid container item>
             <Grid item xs>
               <h1>D2 Info</h1>
             </Grid>
@@ -104,21 +111,23 @@ class App extends React.Component {
               <RunewordSelect label="Max Rune" runes={this.props.data.allRunesJson.nodes} value={this.state.max_rune} change={this.handleMaxRuneChange.bind(this)}/>
             </Grid>
           </Grid>
-          <TableContainer component={Paper}>
-      <Table sx={{ minWidth:800, maxWidth:1200 }}>
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.name}>
-                    <TableCell align="center">{row.name}</TableCell>
-                    <TableCell align="center">{row.version}</TableCell>
-                    <TableCell align="center">{row.type.map(type => (<p>{type}</p>))}</TableCell>
-                    <TableCell align="center">{row.runes.map(rune => (<p>{rune}</p>))}</TableCell>
-                    <TableCell align="center">{row.stats.map(stat => (<p>{stat}</p>))}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Grid container item>
+            <TableContainer component={Paper} sx={{ maxWidth: 1200 }}>
+              <Table sx={{ minWidth: 1000 }}>
+                <TableBody>
+                  {rows.map((row) => (
+                    <TableRow key={row.name}>
+                      <TableCell align="center">{row.name}</TableCell>
+                      <TableCell align="center">{row.version}</TableCell>
+                      <TableCell align="center">{row.type.map(type => (<p>{type}</p>))}</TableCell>
+                      <TableCell align="center">{row.runes.map(rune => (<p>{rune}</p>))}</TableCell>
+                      <TableCell align="center">{row.stats.map(stat => (<p>{stat}</p>))}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
         </Grid>
         <Link to="/about"></Link>
       </main>
