@@ -31,7 +31,7 @@ const RunewordSelect = ({label, runes, value, change}) => {
         }}
       >
         <MenuItem value={0}><em>None</em></MenuItem>
-        {runes.map(rune => <MenuItem key={rune.id} value={rune.id}>{rune.name}</MenuItem>)}
+        {runes.map(rune => <MenuItem key={rune.id} value={rune.id}>{"#" + rune.id + " " + rune.name}</MenuItem>)}
       </Select>
     </FormControl>
   )
