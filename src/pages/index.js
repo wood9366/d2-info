@@ -15,13 +15,14 @@ import Paper from '@mui/material/Paper';
 
 const RunewordSelect = ({label, runes, value, change}) => {
   return (
-    <FormControl fullWidth>
+    <FormControl sx={{ minWidth: 150 }}>
       <InputLabel id="selector">{label}</InputLabel>
       <Select
         labelId="selector"
         value={value}
         label={label}
         onChange={change}
+        autoWidth
         MenuProps={{
           PaperProps: {
             style: {
@@ -104,10 +105,10 @@ class App extends React.Component {
             </Grid>
           </Grid>
           <Grid container item spacing={2}>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item>
               <RunewordSelect label="Rune" runes={this.props.data.allRunesJson.nodes} value={this.state.rune} change={this.handleRuneChange.bind(this)}/>
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item>
               <RunewordSelect label="Max Rune" runes={this.props.data.allRunesJson.nodes} value={this.state.max_rune} change={this.handleMaxRuneChange.bind(this)}/>
             </Grid>
           </Grid>
